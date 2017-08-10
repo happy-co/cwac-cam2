@@ -690,7 +690,7 @@ public class CameraTwoEngine extends CameraEngine {
                                  CaptureRequest request,
                                  long timestamp, long frameNumber) {
       super.onCaptureStarted(session, request, timestamp, frameNumber);
-
+      getBus().post(new ShutterEvent());
       shutter.play(MediaActionSound.SHUTTER_CLICK);
     }
 

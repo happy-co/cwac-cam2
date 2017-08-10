@@ -241,6 +241,7 @@ public class ClassicCameraEngine extends CameraEngine
           camera.takePicture(new Camera.ShutterCallback() {
                                @Override
                                public void onShutter() {
+                                 getBus().post(new ShutterEvent());
                                  // empty plays a sound -- go figure
                                }
                              }, null,

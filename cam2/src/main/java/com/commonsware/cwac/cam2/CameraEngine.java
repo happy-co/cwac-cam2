@@ -150,6 +150,10 @@ abstract public class CameraEngine {
 
   }
 
+  public static class ShutterEvent {
+
+  }
+
   /**
    * Event raised when picture is taken, as a result of a
    * takePicture() call. May include an exception if there was
