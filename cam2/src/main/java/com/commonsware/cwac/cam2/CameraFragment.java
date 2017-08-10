@@ -26,6 +26,7 @@ import android.animation.ObjectAnimator;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -37,6 +38,8 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.Chronometer;
 import android.widget.ImageView;
@@ -87,6 +90,8 @@ public class CameraFragment extends Fragment
   private SeekBar zoomSlider;
   private Chronometer chronometer;
   private ReverseChronometer reverseChronometer;
+  private View blackout;
+  private ImageView freeze;
 
   public static CameraFragment newPictureInstance(Uri output,
                                                   boolean updateMediaStore,
@@ -291,6 +296,8 @@ public class CameraFragment extends Fragment
     previewStack=
       (ViewGroup)v.findViewById(R.id.cwac_cam2_preview_stack);
 
+    blackout = v.findViewById(R.id.cwac_cam2_preview_blackout);
+    freeze = (ImageView) v.findViewById(R.id.cwac_cam2_preview_freeze);
     progress=v.findViewById(R.id.cwac_cam2_progress);
     fabPicture=
       (FloatingActionButton)v.findViewById(R.id.cwac_cam2_picture);
@@ -517,6 +524,34 @@ public class CameraFragment extends Fragment
     else {
       takePicture();
     }
+  }
+
+
+  @SuppressWarnings("unused")
+  @Subscribe(threadMode =ThreadMode.MAIN)
+  public void onEventMainThread(CameraEngine.ShutterEvent event) {
+    blackout.animate().alpha(1).setDuration(100).setInterpolator(new DecelerateInterpolator()).withEndAction(new Runnable() {
+      @Override
+      public void run() {
+        blackout.animate().alpha(0).setDuration(100).setInterpolator(new AccelerateInterpolator()).start();
+      }
+    }).start();  }
+
+  @SuppressWarnings("unused")
+  @Subscribe(threadMode =ThreadMode.MAIN)
+  public void onEventMainThread(CameraEngine.PictureTakenEvent event) {
+    final Bitmap bm = event.getImageContext().buildPreviewThumbnail(getActivity(), 0.1f, true);
+    freeze.setImageBitmap(bm);
+    freeze.setScaleX(1);
+    freeze.setScaleY(1);
+    freeze.setPivotX(fabPicture.getX());
+    freeze.setPivotY(fabPicture.getY());
+    freeze.animate().scaleY(0).scaleX(0).setDuration(200).setInterpolator(new DecelerateInterpolator()).withEndAction(new Runnable() {
+      @Override
+      public void run() {
+        freeze.setImageBitmap(null);
+      }
+    }).start();
   }
 
   private void takePicture() {

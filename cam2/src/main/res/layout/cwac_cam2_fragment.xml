@@ -20,6 +20,18 @@
       android:visibility="gone" />
   </FrameLayout>
 
+  <View
+      android:id="@+id/cwac_cam2_preview_blackout"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="@android:color/black"
+      android:alpha="0"/>
+
+  <ImageView
+      android:id="@+id/cwac_cam2_preview_freeze"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent" />
+
   <ProgressBar
     android:id="@+id/cwac_cam2_progress"
     android:layout_width="wrap_content"
