@@ -49,19 +49,22 @@ public class JPEGWriter extends AbstractImageProcessor {
    */
   public static final String PROP_SKIP_ORIENTATION_NORMALIZATION
     ="skipOrientationNormalization";
+  protected final int quality;
 
   /**
    * {@inheritDoc}
    */
-  public JPEGWriter(Context ctxt) {
+  public JPEGWriter(Context ctxt, int quality) {
     super(ctxt);
+    this.quality = quality;
   }
 
   /**
    * {@inheritDoc}
    */
-  public JPEGWriter(Context ctxt, String tag) {
+  public JPEGWriter(Context ctxt, int quality, String tag) {
     super(ctxt, tag);
+    this.quality = quality;
   }
 
   /**
@@ -75,7 +78,7 @@ public class JPEGWriter extends AbstractImageProcessor {
         .getBoolean(PROP_UPDATE_MEDIA_STORE, false);
     byte[] jpeg=imageContext.getJpeg(!xact
       .getProperties()
-      .getBoolean(PROP_SKIP_ORIENTATION_NORMALIZATION, false));
+      .getBoolean(PROP_SKIP_ORIENTATION_NORMALIZATION, false), this.quality);
 
     if (output!=null) {
       try {

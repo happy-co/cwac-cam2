@@ -41,10 +41,13 @@ import android.view.animation.OvershootInterpolator;
 import android.widget.Chronometer;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
+
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.File;
 import java.util.LinkedList;
 
@@ -70,6 +73,8 @@ public class CameraFragment extends Fragment
   private static final String ARG_RULE_OF_THIRDS="ruleOfThirds";
   private static final String ARG_TIMER_DURATION="timerDuration";
   private static final int PINCH_ZOOM_DELTA=20;
+  private static final String ARG_WIDTH_HEIGHT = "width_height";
+  private static final String ARG_COMPRESSION_PERCENTAGE = "compression_percent";
   private CameraController ctlr;
   private ViewGroup previewStack;
   private FloatingActionButton fabPicture;
@@ -104,6 +109,36 @@ public class CameraFragment extends Fragment
     args.putBoolean(ARG_FACING_EXACT_MATCH, facingExactMatch);
     args.putInt(ARG_TIMER_DURATION, timerDuration);
     args.putBoolean(ARG_RULE_OF_THIRDS, ruleOfThirds);
+    f.setArguments(args);
+
+    return (f);
+  }
+
+  public static CameraFragment newPictureInstance(Uri output,
+                                                  boolean updateMediaStore,
+                                                  int quality,
+                                                  ZoomStyle zoomStyle,
+                                                  boolean facingExactMatch,
+                                                  boolean skipOrientationNormalization,
+                                                  int timerDuration,
+                                                  boolean ruleOfThirds,
+                                                  int widthHeight,
+                                                  int compressionPercentage) {
+    CameraFragment f=new CameraFragment();
+    Bundle args=new Bundle();
+
+    args.putParcelable(ARG_OUTPUT, output);
+    args.putBoolean(ARG_UPDATE_MEDIA_STORE, updateMediaStore);
+    args.putBoolean(ARG_SKIP_ORIENTATION_NORMALIZATION,
+            skipOrientationNormalization);
+    args.putInt(ARG_QUALITY, quality);
+    args.putBoolean(ARG_IS_VIDEO, false);
+    args.putSerializable(ARG_ZOOM_STYLE, zoomStyle);
+    args.putBoolean(ARG_FACING_EXACT_MATCH, facingExactMatch);
+    args.putInt(ARG_TIMER_DURATION, timerDuration);
+    args.putBoolean(ARG_RULE_OF_THIRDS, ruleOfThirds);
+    args.putInt(ARG_WIDTH_HEIGHT, widthHeight);
+    args.putInt(ARG_COMPRESSION_PERCENTAGE, compressionPercentage);
     f.setArguments(args);
 
     return (f);
@@ -493,7 +528,9 @@ public class CameraFragment extends Fragment
       b.toUri(getActivity(), output,
         getArguments().getBoolean(ARG_UPDATE_MEDIA_STORE, false),
         getArguments().getBoolean(ARG_SKIP_ORIENTATION_NORMALIZATION,
-          false));
+          false),
+        getArguments().getInt(ARG_WIDTH_HEIGHT, -1),
+        getArguments().getInt(ARG_COMPRESSION_PERCENTAGE, -1));
     }
 
     fabPicture.setEnabled(false);

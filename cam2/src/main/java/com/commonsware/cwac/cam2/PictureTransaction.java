@@ -98,16 +98,30 @@ public class PictureTransaction {
      *               access, where the photo should be taken
      * @param updateMediaStore true if MediaStore should be updated,
      *                         false otherwise
+     * @param widthHeight the width/height to square resize the image to (value of != -1 will square crop to this dimension)
+     * @param compressionPercent the compression percentage of resulting jpeg (value of -1 will default to 100%)
      * @return the Builder, for more API calls
      */
     public Builder toUri(Context ctxt, Uri output,
                          boolean updateMediaStore,
-                         boolean skipOrientationNormalization) {
-      JPEGWriter jpeg=(JPEGWriter)result.findProcessorByTag(JPEGWriter.class.getCanonicalName());
+                         boolean skipOrientationNormalization,
+                         int widthHeight,
+                         int compressionPercent
+    ) {
+      if (widthHeight == -1) {
+        JPEGWriter jpeg=(JPEGWriter)result.findProcessorByTag(JPEGWriter.class.getCanonicalName());
 
-      if (jpeg == null) {
-        jpeg=new JPEGWriter(ctxt);
-        append(jpeg);
+        if (jpeg == null) {
+          jpeg=new JPEGWriter(ctxt, compressionPercent != -1 ? compressionPercent : 100);
+          append(jpeg);
+        }
+      } else {
+        JPEGSquareResizeWriter jpeg = (JPEGSquareResizeWriter) result.findProcessorByTag(JPEGSquareResizeWriter.class.getCanonicalName());
+
+        if (jpeg == null) {
+          jpeg = new JPEGSquareResizeWriter(ctxt, widthHeight, compressionPercent != -1 ? compressionPercent : 100);
+          append(jpeg);
+        }
       }
 
       result.getProperties().putParcelable(JPEGWriter.PROP_OUTPUT,

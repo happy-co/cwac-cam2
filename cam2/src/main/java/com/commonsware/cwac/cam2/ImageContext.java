@@ -90,7 +90,7 @@ public class ImageContext {
     return(tag==null ? -1 : tag.getValueAsInt(-1));
   }
 
-  public byte[] getJpeg(boolean normalizeOrientation) {
+  public byte[] getJpeg(boolean normalizeOrientation, int quality) {
     if (normalizeOrientation) {
       try {
         int orientation=getOrientation();
@@ -107,7 +107,7 @@ public class ImageContext {
 
             ByteArrayOutputStream baos=new ByteArrayOutputStream();
 
-            exif.writeExif(rotated, baos, 100);
+            exif.writeExif(rotated, baos, quality);
             jpegOriginal=baos.toByteArray();
 
             return(jpegOriginal);
