@@ -16,7 +16,6 @@ package com.commonsware.cwac.cam2;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -24,7 +23,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.WindowManager;
+import android.view.ViewGroup;
+
 import com.commonsware.cwac.cam2.util.Size;
 
 /**
@@ -113,12 +113,21 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
     else {
       if (isFullBleed) {
         if (width>height*previewSize.getWidth()/previewSize.getHeight()) {
-          setMeasuredDimension(width,
-            width*previewSize.getHeight()/previewSize.getWidth());
+          height = width*previewSize.getHeight()/previewSize.getWidth();
         }
         else {
-          setMeasuredDimension(height*previewSize.getWidth()/previewSize.getHeight(),
-            height);
+          width = height*previewSize.getWidth()/previewSize.getHeight();
+        }
+        setMeasuredDimension(width, height);
+        final ViewGroup parent = (ViewGroup)getParent();
+        final int parentWidth = parent.getMeasuredWidth();
+        final int parentHeight = parent.getMeasuredHeight();
+        if (width > parentWidth) {
+          int offset = (parentWidth - width) / 2;
+          setX(offset);
+        } else if (height > parentHeight) {
+          int offset = (parentHeight - height) / 2;
+          setY(offset);
         }
       }
       else {
