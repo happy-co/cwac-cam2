@@ -53,6 +53,7 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.util.LinkedList;
+import java.util.UUID;
 
 /**
  * Fragment for displaying a camera preview, with hooks to allow
@@ -78,6 +79,7 @@ public class CameraFragment extends Fragment
   private static final int PINCH_ZOOM_DELTA=20;
   private static final String ARG_WIDTH_HEIGHT = "width_height";
   private static final String ARG_COMPRESSION_PERCENTAGE = "compression_percent";
+  private static final String ARG_MULTIPLE_PHOTOS = "multiple_photos";
   private CameraController ctlr;
   private ViewGroup previewStack;
   private FloatingActionButton fabPicture;
@@ -128,7 +130,8 @@ public class CameraFragment extends Fragment
                                                   int timerDuration,
                                                   boolean ruleOfThirds,
                                                   int widthHeight,
-                                                  int compressionPercentage) {
+                                                  int compressionPercentage,
+                                                  boolean multiplePhotos) {
     CameraFragment f=new CameraFragment();
     Bundle args=new Bundle();
 
@@ -144,6 +147,7 @@ public class CameraFragment extends Fragment
     args.putBoolean(ARG_RULE_OF_THIRDS, ruleOfThirds);
     args.putInt(ARG_WIDTH_HEIGHT, widthHeight);
     args.putInt(ARG_COMPRESSION_PERCENTAGE, compressionPercentage);
+    args.putBoolean(ARG_MULTIPLE_PHOTOS, multiplePhotos);
     f.setArguments(args);
 
     return (f);
@@ -526,6 +530,10 @@ public class CameraFragment extends Fragment
     }
   }
 
+  public void makeReady() {
+    fabPicture.setEnabled(true);
+    fabSwitch.setEnabled(canSwitchSources());
+  }
 
   @SuppressWarnings("unused")
   @Subscribe(threadMode =ThreadMode.MAIN)
@@ -560,6 +568,9 @@ public class CameraFragment extends Fragment
     PictureTransaction.Builder b=new PictureTransaction.Builder();
 
     if (output!=null) {
+      if (getArguments().getBoolean(ARG_MULTIPLE_PHOTOS, false)) {
+        output = output.buildUpon().appendPath(UUID.randomUUID().toString()).build();
+      }
       b.toUri(getActivity(), output,
         getArguments().getBoolean(ARG_UPDATE_MEDIA_STORE, false),
         getArguments().getBoolean(ARG_SKIP_ORIENTATION_NORMALIZATION,
