@@ -164,18 +164,24 @@ public class Utils {
   public static Size chooseOptimalSize(List<Size> choices, int width, int height, Size aspectRatio) {
     // Collect the supported resolutions that are at least as big as the preview Surface
     List<Size> bigEnough = new ArrayList<Size>();
+    List<Size> correctAspect = new ArrayList<Size>();
     int w = aspectRatio.getWidth();
     int h = aspectRatio.getHeight();
     for (Size option : choices) {
-      if (option.getHeight() == option.getWidth() * h / w &&
-          option.getWidth() >= width && option.getHeight() >= height) {
-        bigEnough.add(option);
+      if (option.getHeight() == option.getWidth() * h / w) {
+        correctAspect.add(option);
+        if (option.getWidth() >= width && option.getHeight() >= height) {
+          bigEnough.add(option);
+        }
       }
     }
 
     // Pick the smallest of those, assuming we found any
     if (bigEnough.size() > 0) {
       return Collections.min(bigEnough, new CompareSizesByArea());
+    } if (correctAspect.size() > 0) {
+      // if we don't have one big enough, return the largest one of correct aspect ratio
+      return Collections.max(correctAspect, new CompareSizesByArea());
     } else {
 //      Log.e(TAG, "Couldn't find any suitable preview size");
       return Collections.max(choices, new CompareSizesByArea());
