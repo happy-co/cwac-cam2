@@ -118,27 +118,25 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
         else {
           width = height*previewSize.getWidth()/previewSize.getHeight();
         }
-        setMeasuredDimension(width, height);
-        final ViewGroup parent = (ViewGroup)getParent();
-        final int parentWidth = parent.getMeasuredWidth();
-        final int parentHeight = parent.getMeasuredHeight();
-        if (width > parentWidth) {
-          int offset = (parentWidth - width) / 2;
-          setX(offset);
-        } else if (height > parentHeight) {
-          int offset = (parentHeight - height) / 2;
-          setY(offset);
-        }
       }
       else {
         if (width<height*previewSize.getWidth()/previewSize.getHeight()) {
-          setMeasuredDimension(width,
-            width*previewSize.getHeight()/previewSize.getWidth());
+          height = width*previewSize.getHeight()/previewSize.getWidth();
         }
         else {
-          setMeasuredDimension(height*previewSize.getWidth()/previewSize.getHeight(),
-            height);
+          width = height*previewSize.getWidth()/previewSize.getHeight();
         }
+      }
+      setMeasuredDimension(width, height);
+      final ViewGroup parent = (ViewGroup)getParent();
+      final int parentWidth = parent.getMeasuredWidth();
+      final int parentHeight = parent.getMeasuredHeight();
+      if (width != parentWidth) {
+        int offset = (parentWidth - width) / 2;
+        setX(offset);
+      } else if (height != parentHeight) {
+        int offset = (parentHeight - height) / 2;
+        setY(offset);
       }
     }
   }
