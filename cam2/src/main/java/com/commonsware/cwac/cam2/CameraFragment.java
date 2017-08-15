@@ -38,6 +38,7 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
@@ -294,7 +295,7 @@ public class CameraFragment extends Fragment
   public View onCreateView(LayoutInflater inflater,
                            ViewGroup container,
                            Bundle savedInstanceState) {
-    View v=
+    final View v=
       inflater.inflate(R.layout.cwac_cam2_fragment, container, false);
 
     previewStack=
@@ -355,6 +356,33 @@ public class CameraFragment extends Fragment
     if (showRuleOfThirds()) {
       v.findViewById(R.id.rule_of_thirds).setVisibility(View.VISIBLE);
     }
+
+    v.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+      @Override
+      public void onGlobalLayout() {
+        v.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+        final boolean isLandscape = getResources().getBoolean(R.bool.is_landscape);
+        final int height = v.getHeight();
+        final int width = v.getWidth();
+        if (isLandscape) {
+          final View left = v.findViewById(R.id.square_crop_left);
+          final View right = v.findViewById(R.id.square_crop_right);
+          int cropAmount = (width - height) / 2;
+          left.getLayoutParams().width = cropAmount;
+          right.getLayoutParams().width = cropAmount;
+          left.invalidate();
+          right.invalidate();
+        } else {
+          final View top = v.findViewById(R.id.square_crop_top);
+          final View bottom = v.findViewById(R.id.square_crop_bottom);
+          int cropAmount = (height - width) / 2;
+          top.getLayoutParams().height = cropAmount;
+          bottom.getLayoutParams().height = cropAmount;
+          top.invalidate();
+          bottom.invalidate();
+        }
+      }
+    });
 
     return(v);
   }

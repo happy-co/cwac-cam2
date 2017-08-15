@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    <View
+        android:id="@+id/square_crop_left"
+        android:background="@android:color/black"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_height="match_parent"
+        android:layout_width="1dp"/>
+    <View
+        android:id="@+id/square_crop_right"
+        android:background="@android:color/black"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_height="match_parent"
+        android:layout_width="1dp"/>
+</merge>

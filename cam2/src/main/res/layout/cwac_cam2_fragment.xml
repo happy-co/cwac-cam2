@@ -20,6 +20,10 @@
       android:visibility="gone" />
   </FrameLayout>
 
+  <include layout="@layout/square_blackouts"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>
+
   <View
       android:id="@+id/cwac_cam2_preview_blackout"
       android:layout_width="match_parent"
