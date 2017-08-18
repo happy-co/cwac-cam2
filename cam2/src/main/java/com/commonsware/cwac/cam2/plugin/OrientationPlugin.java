@@ -24,7 +24,6 @@ import android.os.Build;
 import android.view.OrientationEventListener;
 import android.view.Surface;
 import android.view.WindowManager;
-
 import com.commonsware.cwac.cam2.AbstractCameraActivity;
 import com.commonsware.cwac.cam2.CameraConfigurator;
 import com.commonsware.cwac.cam2.CameraConstraints;
@@ -53,7 +52,7 @@ public class OrientationPlugin implements CameraPlugin {
       public void onOrientationChanged(int orientation) {
         if (lastOrientation!=orientation) {
           AbstractCameraActivity.BUS
-            .post(new CameraEngine.OrientationChangedEvent(orientation));
+            .post(new CameraEngine.OrientationChangedEvent());
         }
 
         lastOrientation=orientation;

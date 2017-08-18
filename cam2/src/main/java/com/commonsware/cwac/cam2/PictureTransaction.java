@@ -17,7 +17,7 @@ package com.commonsware.cwac.cam2;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -100,15 +100,14 @@ public class PictureTransaction {
      *                         false otherwise
      * @param widthHeight the width/height to square resize the image to (value of != -1 will square crop to this dimension)
      * @param compressionPercent the compression percentage of resulting jpeg (value of -1 will default to 100%)
-     * @param orientation orientation of the device
      * @return the Builder, for more API calls
      */
     public Builder toUri(Context ctxt, Uri output,
                          boolean updateMediaStore,
                          boolean skipOrientationNormalization,
                          int widthHeight,
-                         int compressionPercent,
-                         int orientation) {
+                         int compressionPercent
+    ) {
       if (widthHeight == -1) {
         JPEGWriter jpeg=(JPEGWriter)result.findProcessorByTag(JPEGWriter.class.getCanonicalName());
 
@@ -120,7 +119,7 @@ public class PictureTransaction {
         JPEGSquareResizeWriter jpeg = (JPEGSquareResizeWriter) result.findProcessorByTag(JPEGSquareResizeWriter.class.getCanonicalName());
 
         if (jpeg == null) {
-          jpeg = new JPEGSquareResizeWriter(ctxt, widthHeight, compressionPercent != -1 ? compressionPercent : 100, orientation);
+          jpeg = new JPEGSquareResizeWriter(ctxt, widthHeight, compressionPercent != -1 ? compressionPercent : 100);
           append(jpeg);
         }
       }
