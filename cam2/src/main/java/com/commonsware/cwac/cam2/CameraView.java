@@ -14,18 +14,20 @@
 
 package com.commonsware.cwac.cam2;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
+import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.ViewGroup;
 
+import com.commonsware.cwac.cam2.util.DisplayOrientationDetector;
 import com.commonsware.cwac.cam2.util.Size;
+
 
 /**
  * Class responsible for rendering preview frames on the UI
@@ -33,6 +35,9 @@ import com.commonsware.cwac.cam2.util.Size;
  * maintaining aspect ratios and dealing with full-bleed previews.
  */
 public class CameraView extends TextureView implements TextureView.SurfaceTextureListener {
+  private DisplayOrientationDetector mDisplayOrientationDetector;
+  private int mDisplayOrientation;
+
   public interface StateCallback {
     void onReady(CameraView cv);
     void onDestroyed(CameraView cv) throws Exception;
@@ -105,7 +110,7 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
 
     int width=MeasureSpec.getSize(widthMeasureSpec);
     int height=MeasureSpec.getSize(heightMeasureSpec);
-    boolean isFullBleed=true;
+    boolean isFullBleed=false;
 
     if (previewSize==null) {
       setMeasuredDimension(width, height);
@@ -151,6 +156,14 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
 
   private void initListener() {
     setSurfaceTextureListener(this);
+    this.mDisplayOrientationDetector = new DisplayOrientationDetector(getContext()) {
+
+      @Override
+      public void onDisplayOrientationChanged(int displayOrientation) {
+        mDisplayOrientation = displayOrientation;
+        enterTheMatrix();
+      }
+    };
   }
 
   @Override
@@ -187,9 +200,7 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
 
   private void enterTheMatrix() {
     if (previewSize!=null) {
-      adjustAspectRatio(previewSize.getWidth(),
-          previewSize.getHeight(),
-          ((Activity)getContext()).getWindowManager().getDefaultDisplay().getRotation());
+      configureTransform();
     }
   }
 
@@ -234,5 +245,56 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
     }
 
     setTransform(txform);
+  }
+
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+    if (!isInEditMode()) {
+      mDisplayOrientationDetector.enable(ViewCompat.getDisplay(this));
+    }
+  }
+
+  @Override
+  protected void onDetachedFromWindow() {
+    if (!isInEditMode()) {
+      mDisplayOrientationDetector.disable();
+    }
+    super.onDetachedFromWindow();
+  }
+
+  void configureTransform() {
+    Matrix matrix = new Matrix();
+    if (mDisplayOrientation % 180 == 90) {
+      final int width = getWidth();
+      final int height = getHeight();
+      // Rotate the camera preview when the screen is landscape.
+      matrix.setPolyToPoly(
+              new float[]{
+                      0.f, 0.f, // top left
+                      width, 0.f, // top right
+                      0.f, height, // bottom left
+                      width, height, // bottom right
+              }, 0,
+              mDisplayOrientation == 90 ?
+                      // Clockwise
+                      new float[]{
+                              0.f, height, // top left
+                              0.f, 0.f, // top right
+                              width, height, // bottom left
+                              width, 0.f, // bottom right
+                      } : // mDisplayOrientation == 270
+                      // Counter-clockwise
+                      new float[]{
+                              width, 0.f, // top left
+                              width, height, // top right
+                              0.f, 0.f, // bottom left
+                              0.f, height, // bottom right
+                      }, 0,
+              4);
+    } else if (mDisplayOrientation == 180) {
+      matrix.postRotate(180, getWidth() / 2, getHeight() / 2);
+    }
+    setTransform(matrix);
   }
 }

@@ -3,6 +3,8 @@ apply plugin: 'com.android.library'
 dependencies {
     compile 'com.github.clans:fab:1.6.4'
     compile 'org.greenrobot:eventbus:3.0.0'
+    compile 'com.jakewharton.timber:timber:4.5.1'
+    compile 'com.android.support:appcompat-v7:25.4.0'
 }
 
 android {
@@ -10,7 +12,7 @@ android {
     buildToolsVersion "25.0.0"
 
     defaultConfig {
-        minSdkVersion 15
+        minSdkVersion 16
         targetSdkVersion 23
         testApplicationId "com.commonsware.cwac.cam2.test"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

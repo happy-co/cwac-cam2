@@ -227,7 +227,7 @@ abstract public class AbstractCameraActivity extends Activity {
     OrientationLockMode olockMode=
       (OrientationLockMode)getIntent().getSerializableExtra(EXTRA_ORIENTATION_LOCK_MODE);
 
-    lockOrientation(olockMode);
+//    lockOrientation(olockMode);
 
     if (needsOverlay()) {
       getWindow().requestFeature(Window.FEATURE_ACTION_BAR_OVERLAY);

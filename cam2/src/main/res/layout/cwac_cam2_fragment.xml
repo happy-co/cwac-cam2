@@ -7,7 +7,8 @@
   <FrameLayout
     android:id="@+id/cwac_cam2_preview_stack"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
 
     <com.commonsware.cwac.cam2.CameraView
       android:layout_width="match_parent"
