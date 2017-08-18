@@ -17,11 +17,14 @@ package com.commonsware.cwac.cam2;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.MediaScannerConnection;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.util.Log;
 import android.util.TimingLogger;
+
+import com.android.mms.exif.ExifInterface;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,10 +35,12 @@ import java.io.OutputStream;
 public class JPEGSquareResizeWriter extends JPEGWriter {
 
     private final int widthHeight;
+    private final int orientation;
 
-    public JPEGSquareResizeWriter(Context ctxt, int widthHeight, int quality) {
+    public JPEGSquareResizeWriter(Context ctxt, int widthHeight, int quality, int orientation) {
         super(ctxt, quality);
         this.widthHeight = widthHeight;
+        this.orientation = orientation;
     }
 
     @Override
@@ -66,11 +71,21 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
                 final int squareDimension = Math.min(bitmap.getWidth(), bitmap.getHeight());
                 final Bitmap squareBitmap = ThumbnailUtils.extractThumbnail(bitmap, squareDimension, squareDimension, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
                 logger.addSplit("square crop done");
-                final Bitmap resultBitmap = Bitmap.createScaledBitmap(squareBitmap, widthHeight, widthHeight,true);
-                logger.addSplit("full scale done");
+                Matrix matrix = new Matrix();
+                final float sx = widthHeight  / (float)squareBitmap.getWidth();
+                final float sy = widthHeight / (float)squareBitmap.getHeight();
+                matrix.setScale(sx, sy);
+                matrix.setRotate(degreesForRotation(orientation));
+                Log.i("Orientation", orientation + "");
+                final Bitmap scaledRotatedBitmap = Bitmap.createBitmap(squareBitmap, 0, 0, squareBitmap.getWidth(), squareBitmap.getHeight(), matrix, true);
+                logger.addSplit("full scale and rotate done");
+                final ExifInterface exif = imageContext.getExifInterface();
+                exif.setTagValue(ExifInterface.TAG_ORIENTATION, 1);
+                exif.removeCompressedThumbnail();
                 ByteArrayOutputStream baos=new ByteArrayOutputStream();
-                resultBitmap.compress(Bitmap.CompressFormat.JPEG, this.quality, baos);
-                resultBitmap.recycle();
+                exif.writeExif(scaledRotatedBitmap, baos, quality);
+                logger.addSplit("wrote exif data");
+                scaledRotatedBitmap.recycle();
                 squareBitmap.recycle();
                 byte[] result = baos.toByteArray();
 
@@ -105,8 +120,20 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
                 // throw new UnsupportedOperationException("Exception when trying to write JPEG", e);
                 AbstractCameraActivity.BUS.post(new CameraEngine.DeepImpactEvent(e));
             }
+            logger.addSplit("saved file done");
+            logger.dumpToLog();
         }
-        logger.addSplit("saved file done");
-        logger.dumpToLog();
+    }
+
+    static private int degreesForRotation(int orientation) {
+        if (orientation >= 45 && orientation < 135) {
+            return 90;
+        } else if (orientation >= 135 && orientation < 225) {
+            return 180;
+        } else if (orientation >= 225 && orientation < 315) {
+            return 270;
+        } else {
+            return 0;
+        }
     }
 }

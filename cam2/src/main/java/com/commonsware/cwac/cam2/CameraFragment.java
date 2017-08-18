@@ -95,6 +95,7 @@ public class CameraFragment extends Fragment
   private ReverseChronometer reverseChronometer;
   private View blackout;
   private ImageView freeze;
+  private int orientation;
 
   public static CameraFragment newPictureInstance(Uri output,
                                                   boolean updateMediaStore,
@@ -563,6 +564,14 @@ public class CameraFragment extends Fragment
     fabSwitch.setEnabled(canSwitchSources());
   }
 
+
+
+  @SuppressWarnings("unused")
+  @Subscribe(threadMode =ThreadMode.MAIN)
+  public void onEventMainThread(CameraEngine.OrientationChangedEvent event) {
+    this.orientation = event.orientation;
+  }
+
   @SuppressWarnings("unused")
   @Subscribe(threadMode =ThreadMode.MAIN)
   public void onEventMainThread(CameraEngine.ShutterEvent event) {
@@ -604,7 +613,8 @@ public class CameraFragment extends Fragment
         getArguments().getBoolean(ARG_SKIP_ORIENTATION_NORMALIZATION,
           false),
         getArguments().getInt(ARG_WIDTH_HEIGHT, -1),
-        getArguments().getInt(ARG_COMPRESSION_PERCENTAGE, -1));
+        getArguments().getInt(ARG_COMPRESSION_PERCENTAGE, -1),
+        orientation);
     }
 
     fabPicture.setEnabled(false);
