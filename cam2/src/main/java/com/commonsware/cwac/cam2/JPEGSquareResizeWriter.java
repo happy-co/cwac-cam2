@@ -17,16 +17,21 @@ package com.commonsware.cwac.cam2;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.MediaScannerConnection;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.util.Log;
 import android.util.TimingLogger;
 
+import com.android.mms.exif.ExifInterface;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+
+import timber.log.Timber;
 
 
 public class JPEGSquareResizeWriter extends JPEGWriter {
@@ -47,6 +52,9 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
         boolean updateMediaStore=xact
                 .getProperties()
                 .getBoolean(PROP_UPDATE_MEDIA_STORE, false);
+        boolean normalizeOrientation = !xact
+                .getProperties()
+                .getBoolean(PROP_SKIP_ORIENTATION_NORMALIZATION, false);
         byte[] src=imageContext.getJpeg();
         if (output!=null) {
             try {
@@ -65,12 +73,31 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
                 logger.addSplit("basic resize done");
                 final int squareDimension = Math.min(bitmap.getWidth(), bitmap.getHeight());
                 final Bitmap squareBitmap = ThumbnailUtils.extractThumbnail(bitmap, squareDimension, squareDimension, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
-                logger.addSplit("square crop done");
-                final Bitmap resultBitmap = Bitmap.createScaledBitmap(squareBitmap, widthHeight, widthHeight,true);
-                logger.addSplit("full scale done");
+                Matrix matrix = new Matrix();
+                final float sx = widthHeight  / (float)squareBitmap.getWidth();
+                final float sy = widthHeight / (float)squareBitmap.getHeight();
+                matrix.setScale(sx, sy);
+                final Bitmap scaledRotatedBitmap;
                 ByteArrayOutputStream baos=new ByteArrayOutputStream();
-                resultBitmap.compress(Bitmap.CompressFormat.JPEG, this.quality, baos);
-                resultBitmap.recycle();
+                int orientation=imageContext.getOrientation();
+                if (normalizeOrientation && needsNormalization(orientation)) {
+                    Timber.i("Rotating Image, orientation: %d", orientation);
+                    matrix.setRotate(degreesForRotation(orientation));
+                    scaledRotatedBitmap = Bitmap.createBitmap(squareBitmap, 0, 0, squareBitmap.getWidth(), squareBitmap.getHeight(), matrix, true);
+                    logger.addSplit("full scale and rotate done");
+                    final ExifInterface exif = imageContext.getExifInterface();
+                    exif.setTagValue(ExifInterface.TAG_ORIENTATION, 1);
+                    exif.removeCompressedThumbnail();
+                    logger.addSplit("full scale done");
+                    exif.writeExif(scaledRotatedBitmap, baos, quality);
+                } else {
+                    Timber.i("No Rotation Needed");
+                    scaledRotatedBitmap = Bitmap.createBitmap(squareBitmap, 0, 0, squareBitmap.getWidth(), squareBitmap.getHeight(), matrix, true);
+                    logger.addSplit("full scale and rotate done");
+                    scaledRotatedBitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
+                }
+                logger.addSplit("wrote exif data");
+                scaledRotatedBitmap.recycle();
                 squareBitmap.recycle();
                 byte[] result = baos.toByteArray();
 
@@ -108,5 +135,28 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
         }
         logger.addSplit("saved file done");
         logger.dumpToLog();
+    }
+
+    private boolean needsNormalization(int orientation) {
+        return(orientation==8 || orientation==3 || orientation==6);
+    }
+
+    static private int degreesForRotation(int orientation) {
+        int result;
+
+        switch (orientation) {
+            case 8:
+                result=270;
+                break;
+
+            case 3:
+                result=180;
+                break;
+
+            default:
+                result=90;
+        }
+
+        return(result);
     }
 }
