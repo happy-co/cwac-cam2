@@ -25,16 +25,20 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.view.View;
+
 import com.commonsware.cwac.cam2.plugin.FlashModePlugin;
 import com.commonsware.cwac.cam2.plugin.FocusModePlugin;
 import com.commonsware.cwac.cam2.plugin.OrientationPlugin;
 import com.commonsware.cwac.cam2.plugin.SizeAndFormatPlugin;
 import com.commonsware.cwac.cam2.util.Size;
 import com.commonsware.cwac.cam2.util.Utils;
+
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Queue;
@@ -70,6 +74,10 @@ public class CameraController implements CameraView.StateCallback {
       FocusMode.CONTINUOUS : focusMode;
     this.isVideo=isVideo;
     this.allowChangeFlashMode=allowChangeFlashMode;
+  }
+
+  public CameraSession getSession() {
+    return session;
   }
 
   /**
@@ -447,7 +455,14 @@ public class CameraController implements CameraView.StateCallback {
     }
   }
 
-  /**
+  public List<FlashMode> getAvailableFlashModes() {
+    if (session == null) {
+      return Collections.emptyList();
+    }
+    return session.getAvailableFlashModes();
+  }
+
+    /**
    * Raised if there are no available cameras on this
    * device. Consider using uses-feature elements in the
    * manifest, so your app only runs on devices that have

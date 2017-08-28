@@ -277,6 +277,7 @@ public class ClassicCameraEngine extends CameraEngine
 
         Camera.Parameters params=camera.getParameters();
         List<String> rawFlashModes=params.getSupportedFlashModes();
+        session.setAvailableClassicFlashModes(rawFlashModes);
 
         eligibleFlashModes.clear();
 

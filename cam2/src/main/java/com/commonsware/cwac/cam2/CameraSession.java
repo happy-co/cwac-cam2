@@ -15,8 +15,12 @@
 package com.commonsware.cwac.cam2;
 
 import android.content.Context;
+
 import com.commonsware.cwac.cam2.util.Size;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Class representing a session with a camera. While
@@ -37,6 +41,7 @@ public class CameraSession {
   private final ArrayList<CameraPlugin> plugins=new ArrayList<CameraPlugin>();
   private Size previewSize;
   private FlashMode currentFlashMode;
+  private final List<FlashMode> availableFlashModes=new ArrayList<>();
 
   /**
    * Constructor.
@@ -91,6 +96,30 @@ public class CameraSession {
 
   void setCurrentFlashMode(FlashMode currentFlashMode) {
     this.currentFlashMode=currentFlashMode;
+  }
+
+  public List<FlashMode> getAvailableFlashModes() {
+    return Collections.unmodifiableList(availableFlashModes);
+  }
+
+  public void setAvailableClassicFlashModes(List<String> rawFlashModes) {
+    availableFlashModes.clear();
+    for (String rawFlashMode : rawFlashModes) {
+      final FlashMode mode = FlashMode.lookupClassicMode(rawFlashMode);
+      if (mode != null) {
+        availableFlashModes.add(mode);
+      }
+    }
+  }
+
+  public void setAvailableCameraTwoFlashModes(int[] rawFlashModes) {
+    availableFlashModes.clear();
+    for (int rawFlashMode : rawFlashModes) {
+      final FlashMode mode = FlashMode.lookupCameraTwoMode(rawFlashMode);
+      if (mode != null) {
+        availableFlashModes.add(mode);
+      }
+    }
   }
 
   /**

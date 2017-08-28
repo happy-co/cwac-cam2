@@ -226,6 +226,7 @@ public class CameraTwoEngine extends CameraEngine {
           eligibleFlashModes.clear();
 
           int[] availModes=cc.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_MODES);
+          session.setAvailableCameraTwoFlashModes(availModes);
 
           for (FlashMode flashMode : preferredFlashModes) {
             for (int rawFlashMode : availModes) {
