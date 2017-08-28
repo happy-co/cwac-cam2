@@ -382,6 +382,9 @@ public class CameraController implements CameraView.StateCallback {
   @SuppressWarnings("unused")
   @Subscribe(threadMode=ThreadMode.MAIN)
   public void onEventMainThread(CameraEngine.OpenedEvent event) {
+    if (session == null) {
+      return;
+    }
     if (event.exception!=null) {
       // handled at fragment level
     }
