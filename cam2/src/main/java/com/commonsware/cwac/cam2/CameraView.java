@@ -15,6 +15,7 @@
 package com.commonsware.cwac.cam2;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
@@ -23,7 +24,6 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
-import android.view.ViewGroup;
 
 import com.commonsware.cwac.cam2.util.DisplayOrientationDetector;
 import com.commonsware.cwac.cam2.util.Size;
@@ -107,43 +107,8 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
   @Override
   protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-    int width=MeasureSpec.getSize(widthMeasureSpec);
-    int height=MeasureSpec.getSize(heightMeasureSpec);
-    boolean isFullBleed=false;
-
-    if (previewSize==null) {
-      setMeasuredDimension(width, height);
-    }
-    else {
-      if (isFullBleed) {
-        if (width>height*previewSize.getWidth()/previewSize.getHeight()) {
-          height = width*previewSize.getHeight()/previewSize.getWidth();
-        }
-        else {
-          width = height*previewSize.getWidth()/previewSize.getHeight();
-        }
-      }
-      else {
-        if (width<height*previewSize.getWidth()/previewSize.getHeight()) {
-          height = width*previewSize.getHeight()/previewSize.getWidth();
-        }
-        else {
-          width = height*previewSize.getWidth()/previewSize.getHeight();
-        }
-      }
-      setMeasuredDimension(width, height);
-      final ViewGroup parent = (ViewGroup)getParent();
-      final int parentWidth = parent.getMeasuredWidth();
-      final int parentHeight = parent.getMeasuredHeight();
-      if (width != parentWidth) {
-        int offset = (parentWidth - width) / 2;
-        setX(offset);
-      } else if (height != parentHeight) {
-        int offset = (parentHeight - height) / 2;
-        setY(offset);
-      }
-    }
+    final int widthHeight = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
+    setMeasuredDimension(widthHeight, widthHeight);
   }
 
   public void setStateCallback(StateCallback cb) {
@@ -265,35 +230,69 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
 
   void configureTransform() {
     Matrix matrix = new Matrix();
+    final int width = getWidth();
+    final int height = getHeight();
+    int previewWidth = previewSize.getWidth();
+    int previewHeight = previewSize.getHeight();
+    // if we are in portrait the height and width are switched
+    if (getContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+      previewWidth = previewSize.getHeight();
+      previewHeight = previewSize.getWidth();
+    }
+    float widthOffset = 0.f;
+    float heightOffset = 0.f;
+    // work out which dimension we need to scale on and how much to scale
+    if (previewWidth > previewHeight) {
+      float aspectRatio = (float) width / (float) height;
+      float previewAspectRatio = (float) previewWidth / (float) previewHeight;
+      widthOffset = Math.abs((width * (aspectRatio - previewAspectRatio)) / 2f);
+    } else {
+      float aspectRatio = (float)height / (float)width;
+      float previewAspectRatio = (float)previewHeight / (float)previewWidth;
+      heightOffset = Math.abs((width * (aspectRatio - previewAspectRatio)) / 2f);
+    }
+    // set the destinations for the new poly taking into account any offsets
+    float[] topLeft = new float[]{-widthOffset, -heightOffset};
+    float[] topRight = new float[]{width + widthOffset, -heightOffset};
+    float[] bottomLeft = new float[]{-widthOffset, height + heightOffset};
+    float[] bottomRight = new float[]{width + widthOffset, height + heightOffset};
     if (mDisplayOrientation % 180 == 90) {
-      final int width = getWidth();
-      final int height = getHeight();
-      // Rotate the camera preview when the screen is landscape.
-      matrix.setPolyToPoly(
+      if (mDisplayOrientation == 90) {
+        // rotate left
+        float[] temp = topLeft;
+        topLeft = bottomLeft;
+        bottomLeft = bottomRight;
+        bottomRight = topRight;
+        topRight = temp;
+      } else {
+        // rotate right
+        float[] temp = topLeft;
+        topLeft = topRight;
+        topRight = bottomRight;
+        bottomRight = bottomLeft;
+        bottomLeft = temp;
+      }
+    }
+
+    // map the src to dest poly
+    matrix.setPolyToPoly(
               new float[]{
                       0.f, 0.f, // top left
                       width, 0.f, // top right
                       0.f, height, // bottom left
                       width, height, // bottom right
               }, 0,
-              mDisplayOrientation == 90 ?
-                      // Clockwise
-                      new float[]{
-                              0.f, height, // top left
-                              0.f, 0.f, // top right
-                              width, height, // bottom left
-                              width, 0.f, // bottom right
-                      } : // mDisplayOrientation == 270
-                      // Counter-clockwise
-                      new float[]{
-                              width, 0.f, // top left
-                              width, height, // top right
-                              0.f, 0.f, // bottom left
-                              0.f, height, // bottom right
-                      }, 0,
-              4);
-    } else if (mDisplayOrientation == 180) {
-      matrix.postRotate(180, getWidth() / 2, getHeight() / 2);
+              new float[]{
+                      topLeft[0], topLeft[1], // top left
+                      topRight[0], topRight[1], // top right
+                      bottomLeft[0], bottomLeft[1], // bottom left
+                      bottomRight[0], bottomRight[1], // bottom right
+              }, 0, 4);
+
+    // rotate 180 if needed
+    // rotate 180 if needed as using poly to poly here would create a mirror image
+    if (mDisplayOrientation == 180) {
+      matrix.postRotate(180, width / 2, height / 2);
     }
     setTransform(matrix);
   }

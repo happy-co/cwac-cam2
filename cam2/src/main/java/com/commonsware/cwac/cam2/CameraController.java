@@ -19,7 +19,6 @@
 
 package com.commonsware.cwac.cam2;
 
-import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.os.Build;
@@ -383,12 +382,9 @@ public class CameraController implements CameraView.StateCallback {
       CameraView cv=getPreview(camera);
 
       if (cv!=null) {
+        // we don't care about swapping as we handle this in CameraView transform
         boolean shouldSwapPreviewDimensions=
-          cv
-            .getContext()
-            .getResources()
-            .getConfiguration().orientation==
-            Configuration.ORIENTATION_PORTRAIT;
+          false;
         Size virtualPreviewSize=session.getPreviewSize();
         /*
          * Size will always be like this: 4032x3024, 2688x1512 or 800x600, so in portrait mode,

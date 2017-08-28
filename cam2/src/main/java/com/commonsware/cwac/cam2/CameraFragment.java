@@ -38,7 +38,6 @@ import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
@@ -357,34 +356,53 @@ public class CameraFragment extends Fragment
       v.findViewById(R.id.rule_of_thirds).setVisibility(View.VISIBLE);
     }
 
-    v.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-      @Override
-      public void onGlobalLayout() {
-        v.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-        final boolean isLandscape = getResources().getBoolean(R.bool.is_landscape);
-        final int height = v.getHeight();
-        final int width = v.getWidth();
-        if (isLandscape) {
-          final View left = v.findViewById(R.id.square_crop_left);
-          final View right = v.findViewById(R.id.square_crop_right);
-          int cropAmount = (width - height) / 2;
-          left.getLayoutParams().width = cropAmount;
-          right.getLayoutParams().width = cropAmount;
-          left.invalidate();
-          right.invalidate();
-        } else {
-          final View top = v.findViewById(R.id.square_crop_top);
-          final View bottom = v.findViewById(R.id.square_crop_bottom);
-          int cropAmount = (height - width) / 2;
-          top.getLayoutParams().height = cropAmount;
-          bottom.getLayoutParams().height = cropAmount;
-          top.invalidate();
-          bottom.invalidate();
-        }
-      }
-    });
 
     return(v);
+  }
+
+  private void updateFlashIcon() {
+    if (flashMode == null) {
+      flashMenuItem.setVisible(false);
+      flashMenuItem.setEnabled(false);
+    } else {
+      flashMenuItem.setVisible(true);
+      flashMenuItem.setEnabled(true);
+    }
+    switch(flashMode) {
+      case ALWAYS:
+        flashMenuItem.setIcon(R.drawable.ic_flash_on_white_24dp);
+        break;
+      case AUTO:
+        flashMenuItem.setIcon(R.drawable.ic_flash_auto_white_24dp);
+        break;
+      case OFF:
+        flashMenuItem.setIcon(R.drawable.ic_flash_off_white_24dp);
+        break;
+      case REDEYE:
+        flashMenuItem.setIcon(R.drawable.ic_remove_red_eye_white_24dp);
+        break;
+      case TORCH:
+        flashMenuItem.setIcon(R.drawable.ic_highlight_white_24dp);
+        break;
+    }
+  }
+
+
+  private int getNavigationBarHeight() {
+    final Resources resources = getResources();
+    int id = resources.getIdentifier(resources.getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT ? "navigation_bar_height" : "navigation_bar_height_landscape","dimen", "android");
+    if (id > 0) {
+      return resources.getDimensionPixelSize(id);
+    }
+    return 0;
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    if (flashMode != null) {
+      outState.putInt(STATE_FLASH_MODE_ORDINAL, flashMode.ordinal());
+    }
   }
 
   @Override
