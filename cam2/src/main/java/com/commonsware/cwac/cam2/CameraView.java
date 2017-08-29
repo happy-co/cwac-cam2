@@ -107,13 +107,6 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
     requestLayout();
   }
 
-  @Override
-  protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    final int widthHeight = Math.min(MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec));
-    setMeasuredDimension(widthHeight, widthHeight);
-  }
-
   public void setStateCallback(StateCallback cb) {
     stateCallback=cb;
   }
