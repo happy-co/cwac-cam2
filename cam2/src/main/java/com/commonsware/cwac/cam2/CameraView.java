@@ -15,15 +15,17 @@
 package com.commonsware.cwac.cam2;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.WindowManager;
 
 import com.commonsware.cwac.cam2.util.DisplayOrientationDetector;
 import com.commonsware.cwac.cam2.util.Size;
@@ -37,6 +39,7 @@ import com.commonsware.cwac.cam2.util.Size;
 public class CameraView extends TextureView implements TextureView.SurfaceTextureListener {
   private DisplayOrientationDetector mDisplayOrientationDetector;
   private int mDisplayOrientation;
+  private WindowManager wmgr;
 
   public interface StateCallback {
     void onReady(CameraView cv);
@@ -120,6 +123,9 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
   }
 
   private void initListener() {
+    wmgr = (WindowManager)getContext()
+            .getApplicationContext()
+            .getSystemService(Context.WINDOW_SERVICE);
     setSurfaceTextureListener(this);
     this.mDisplayOrientationDetector = new DisplayOrientationDetector(getContext()) {
 
@@ -235,7 +241,7 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
     int previewWidth = previewSize.getWidth();
     int previewHeight = previewSize.getHeight();
     // if we are in portrait the height and width are switched
-    if (getContext().getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
+    if (isPortrait()) {
       previewWidth = previewSize.getHeight();
       previewHeight = previewSize.getWidth();
     }
@@ -295,5 +301,13 @@ public class CameraView extends TextureView implements TextureView.SurfaceTextur
       matrix.postRotate(180, width / 2, height / 2);
     }
     setTransform(matrix);
+  }
+
+  private boolean isPortrait() {
+    Display display= wmgr.getDefaultDisplay();
+    DisplayMetrics metrics=new DisplayMetrics();
+    display.getMetrics(metrics);
+    display.getRealMetrics(metrics);
+    return metrics.widthPixels<metrics.heightPixels;
   }
 }
