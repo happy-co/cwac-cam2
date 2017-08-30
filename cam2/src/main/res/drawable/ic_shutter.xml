@@ -1,0 +1,14 @@
+<selector xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    tools:targetApi="lollipop">
+    <item android:id="@+id/disabled" android:drawable="@drawable/ic_lens_disabled"
+        android:state_enabled="false"/>
+    <item android:id="@+id/pressed" android:drawable="@drawable/ic_lens_pressed"
+        android:state_pressed="true"/>
+    <item android:id="@+id/normal" android:drawable="@drawable/ic_lens"/>
+
+    <!--<transition android:fromId="@+id/normal" android:toId="@+id/pressed"-->
+            <!--android:drawable="@drawable/shutter_to_pressed"/>-->
+    <!--<transition android:fromId="@+id/pressed" android:toId="@+id/normal"-->
+        <!--android:drawable="@drawable/shutter_to_normal"/>-->
+</selector>

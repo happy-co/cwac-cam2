@@ -1,0 +1,43 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/cwac_cam2_overlay"
+        app:layout_constraintStart_toStartOf="@id/cwac_cam2_preview_stack"
+        app:layout_constraintEnd_toEndOf="@id/cwac_cam2_preview_stack"
+        app:layout_constraintTop_toTopOf="@id/cwac_cam2_zoom_minus"
+        app:layout_constraintBottom_toBottomOf="@id/cwac_cam2_zoom_minus"
+        />
+    <ImageView
+        android:id="@+id/cwac_cam2_zoom_minus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_remove_white_24dp"
+        android:padding="16dp"
+        app:layout_constraintStart_toStartOf="@id/cwac_cam2_preview_stack"
+        app:layout_constraintBottom_toBottomOf="@id/cwac_cam2_preview_stack" />
+    <ImageView
+        android:id="@+id/cwac_cam2_zoom_plus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/ic_add_white_24dp"
+        android:padding="16dp"
+        app:layout_constraintEnd_toEndOf="@id/cwac_cam2_preview_stack"
+        app:layout_constraintBottom_toBottomOf="@id/cwac_cam2_preview_stack" />
+    <SeekBar
+        android:id="@+id/cwac_cam2_zoom"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:paddingBottom="16dp"
+        android:paddingTop="16dp"
+        app:layout_constraintStart_toEndOf="@id/cwac_cam2_zoom_minus"
+        app:layout_constraintEnd_toStartOf="@id/cwac_cam2_zoom_plus"
+        app:layout_constraintTop_toTopOf="@id/cwac_cam2_zoom_minus"
+        app:layout_constraintBottom_toBottomOf="@id/cwac_cam2_zoom_minus"
+        app:layout_constraintVertical_weight="0.5"
+        android:visibility="gone" />
+
+
+</merge>

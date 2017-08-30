@@ -82,4 +82,11 @@ public class ErrorConstants {
    */
   public static final int ERROR_MISC=
     ERROR_LIST_CAMERAS+7;
+
+  /**
+   * resultCode for ResultReceiver, indicating that there was
+   * a problem while trying to switch flash mode
+   */
+  public static final int ERROR_SWITCHING_FLASHMODE=
+          ERROR_LIST_CAMERAS+8;
 }

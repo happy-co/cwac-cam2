@@ -26,14 +26,19 @@ import android.animation.ObjectAnimator;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -42,6 +47,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.Chronometer;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 
@@ -52,7 +58,9 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -80,6 +88,7 @@ public class CameraFragment extends Fragment
   private static final String ARG_WIDTH_HEIGHT = "width_height";
   private static final String ARG_COMPRESSION_PERCENTAGE = "compression_percent";
   private static final String ARG_MULTIPLE_PHOTOS = "multiple_photos";
+  private static final java.lang.String STATE_FLASH_MODE_ORDINAL = "flash_mode_ordinal";
   private CameraController ctlr;
   private ViewGroup previewStack;
   private FloatingActionButton fabPicture;
@@ -94,6 +103,11 @@ public class CameraFragment extends Fragment
   private ReverseChronometer reverseChronometer;
   private View blackout;
   private ImageView freeze;
+  private Toolbar toolbar;
+  private FlashMode flashMode;
+  private MenuItem flashMenuItem;
+  private ImageView shutter;
+  private ImageButton gallery;
 
   public static CameraFragment newPictureInstance(Uri output,
                                                   boolean updateMediaStore,
@@ -237,6 +251,7 @@ public class CameraFragment extends Fragment
       }
 
       if (fabPicture!=null) {
+        shutter.setEnabled(true);
         fabPicture.setEnabled(true);
         fabSwitch.setEnabled(canSwitchSources());
       }
@@ -297,12 +312,104 @@ public class CameraFragment extends Fragment
     final View v=
       inflater.inflate(R.layout.cwac_cam2_fragment, container, false);
 
+    if (getResources().getBoolean(R.bool.sw600dp)) {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !getActivity().isInMultiWindowMode()) {
+        final int navBarHeight = getNavigationBarHeight();
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+          ((ViewGroup.MarginLayoutParams) v.getLayoutParams()).setMargins(0, navBarHeight, 0, navBarHeight);
+        } else {
+          ((ViewGroup.MarginLayoutParams) v.getLayoutParams()).setMargins(navBarHeight, 0, navBarHeight, 0);
+        }
+      }
+    }
     previewStack=
       (ViewGroup)v.findViewById(R.id.cwac_cam2_preview_stack);
 
     blackout = v.findViewById(R.id.cwac_cam2_preview_blackout);
     freeze = (ImageView) v.findViewById(R.id.cwac_cam2_preview_freeze);
     progress=v.findViewById(R.id.cwac_cam2_progress);
+    gallery = (ImageButton) v.findViewById(R.id.cwac_cam2_gallery);
+    v.findViewById(R.id.cwac_cam2_switch).setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        try {
+          ctlr.switchCamera();
+        }
+        catch (Exception e) {
+          ctlr.postError(ErrorConstants.ERROR_SWITCHING_CAMERAS, e);
+          Log.e(getClass().getSimpleName(),
+                  "Exception switching camera", e);
+        }
+      }
+    });
+    shutter=(ImageView)v.findViewById(R.id.cwac_cam2_shutter);
+    shutter.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        performCameraAction();
+      }
+    });
+    toolbar=(Toolbar)v.findViewById(R.id.cwac_cam2_toolbar);
+    toolbar.setTitle("Lounge Room");
+    toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
+    toolbar.inflateMenu(R.menu.camera_menu);
+    toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        getActivity().finish();
+      }
+    });
+    if (savedInstanceState != null) {
+      final int stateFlashModeOrdinal = savedInstanceState.getInt(STATE_FLASH_MODE_ORDINAL, -1);
+      if (stateFlashModeOrdinal == -1) {
+        flashMode = null;
+      } else {
+        flashMode = FlashMode.values()[stateFlashModeOrdinal];
+      }
+    }
+    flashMenuItem = toolbar.getMenu().findItem(R.id.flash_mode);
+    toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+      @Override
+      public boolean onMenuItemClick(MenuItem item) {
+        if (item == flashMenuItem) {
+          if (ctlr == null) {
+            // we don't have a controller, do nothing
+            return false;
+          }
+          final List<FlashMode> availableFlashModes = ctlr.getAvailableFlashModes();
+          FlashMode newFlashMode;
+          if (flashMode == null) {
+            // if we don't have one, presume we are using the first one
+            newFlashMode = availableFlashModes.get(0);
+          } else {
+            int index = availableFlashModes.indexOf(flashMode);
+            newFlashMode = availableFlashModes.get((index + 1) % availableFlashModes.size());
+          }
+          if (newFlashMode == flashMode) {
+            // no change just return
+            return false;
+          }
+          try {
+            ctlr.stop();
+            getController().getEngine().setPreferredFlashModes(Collections.singletonList(newFlashMode));
+            getController().start();
+            ctlr.start();
+            flashMode = newFlashMode;
+            updateFlashIcon();
+            return true;
+          } catch (Exception e) {
+            ctlr.postError(ErrorConstants.ERROR_SWITCHING_FLASHMODE, e);
+            Log.e(getClass().getSimpleName(),
+                    "Exception switching flash mode", e);
+            return false;
+          }
+        }
+
+        // success! change the icon
+
+        return false;
+      }
+    });
     fabPicture=
       (FloatingActionButton)v.findViewById(R.id.cwac_cam2_picture);
     reverseChronometer=
@@ -484,6 +591,7 @@ public class CameraFragment extends Fragment
       progress.setVisibility(View.GONE);
       fabSwitch.setEnabled(canSwitchSources());
       fabPicture.setEnabled(true);
+      shutter.setEnabled(true);
       zoomSlider=(SeekBar)getView().findViewById(R.id.cwac_cam2_zoom);
 
       int timerDuration=getArguments().getInt(ARG_TIMER_DURATION);
@@ -515,6 +623,8 @@ public class CameraFragment extends Fragment
         previewStack.setOnTouchListener(null);
         zoomSlider.setVisibility(View.GONE);
       }
+      flashMode = ctlr.getCurrentFlashMode();
+      updateFlashIcon();
     }
     else {
       ctlr.postError(ErrorConstants.ERROR_OPEN_CAMERA,
@@ -578,6 +688,7 @@ public class CameraFragment extends Fragment
 
   public void makeReady() {
     fabPicture.setEnabled(true);
+    shutter.setEnabled(true);
     fabSwitch.setEnabled(canSwitchSources());
   }
 
@@ -598,15 +709,18 @@ public class CameraFragment extends Fragment
     freeze.setImageBitmap(bm);
     freeze.setScaleX(1);
     freeze.setScaleY(1);
-    freeze.setPivotX(fabPicture.getX());
-    freeze.setPivotY(fabPicture.getY());
-    freeze.animate().scaleY(0).scaleX(0).setDuration(200).setInterpolator(new DecelerateInterpolator()).withEndAction(new Runnable() {
+    freeze.setPivotX(gallery.getX() + gallery.getWidth()/2 - freeze.getX());
+    freeze.setPivotY(gallery.getY() + gallery.getHeight()/2 - freeze.getY());
+    freeze.animate().scaleY(0).scaleX(0).setDuration(200).setInterpolator(new AccelerateInterpolator()).withEndAction(new Runnable() {
       @Override
       public void run() {
         freeze.setImageBitmap(null);
+        final int size = getResources().getDimensionPixelSize(R.dimen.cwac_cam2_button_size);
+        gallery.setImageBitmap(ThumbnailUtils.extractThumbnail(bm, size, size, ThumbnailUtils.OPTIONS_RECYCLE_INPUT));
       }
     }).start();
   }
+
 
   private void takePicture() {
     Uri output=getArguments().getParcelable(ARG_OUTPUT);
@@ -627,6 +741,7 @@ public class CameraFragment extends Fragment
 
     fabPicture.setEnabled(false);
     fabSwitch.setEnabled(false);
+    shutter.setEnabled(false);
     ctlr.takePicture(b.build());
   }
 
