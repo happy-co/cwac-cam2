@@ -31,8 +31,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-import timber.log.Timber;
-
 
 public class JPEGSquareResizeWriter extends JPEGWriter {
 
@@ -81,7 +79,6 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
                 ByteArrayOutputStream baos=new ByteArrayOutputStream();
                 int orientation=imageContext.getOrientation();
                 if (normalizeOrientation && needsNormalization(orientation)) {
-                    Timber.i("Rotating Image, orientation: %d", orientation);
                     matrix.setRotate(degreesForRotation(orientation));
                     scaledRotatedBitmap = Bitmap.createBitmap(squareBitmap, 0, 0, squareBitmap.getWidth(), squareBitmap.getHeight(), matrix, true);
                     logger.addSplit("full scale and rotate done");
@@ -91,7 +88,6 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
                     logger.addSplit("full scale done");
                     exif.writeExif(scaledRotatedBitmap, baos, quality);
                 } else {
-                    Timber.i("No Rotation Needed");
                     scaledRotatedBitmap = Bitmap.createBitmap(squareBitmap, 0, 0, squareBitmap.getWidth(), squareBitmap.getHeight(), matrix, true);
                     logger.addSplit("full scale and rotate done");
                     scaledRotatedBitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
@@ -100,7 +96,7 @@ public class JPEGSquareResizeWriter extends JPEGWriter {
                 scaledRotatedBitmap.recycle();
                 squareBitmap.recycle();
                 byte[] result = baos.toByteArray();
-
+                imageContext.setJpeg(result);
                 if (output.getScheme().equals("file")) {
                     String path=output.getPath();
                     File f=new File(path);
