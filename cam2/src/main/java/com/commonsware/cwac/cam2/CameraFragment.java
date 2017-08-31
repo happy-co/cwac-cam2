@@ -325,17 +325,6 @@ public class CameraFragment extends Fragment
                            Bundle savedInstanceState) {
     final View v=
       inflater.inflate(R.layout.cwac_cam2_fragment, container, false);
-
-    if (getResources().getBoolean(R.bool.sw600dp)) {
-      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !getActivity().isInMultiWindowMode()) {
-        final int navBarHeight = getNavigationBarHeight();
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-          ((ViewGroup.MarginLayoutParams) v.getLayoutParams()).setMargins(0, navBarHeight, 0, navBarHeight);
-        } else {
-          ((ViewGroup.MarginLayoutParams) v.getLayoutParams()).setMargins(navBarHeight, 0, navBarHeight, 0);
-        }
-      }
-    }
     previewStack=
       (ViewGroup)v.findViewById(R.id.cwac_cam2_preview_stack);
 
@@ -619,6 +608,17 @@ public class CameraFragment extends Fragment
       }
     }
     set.applyTo(root);
+
+    if (getResources().getBoolean(R.bool.sw600dp)) {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N || !getActivity().isInMultiWindowMode()) {
+        final int navBarHeight = getNavigationBarHeight();
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+          ((ViewGroup.MarginLayoutParams) root.getLayoutParams()).setMargins(0, navBarHeight, 0, navBarHeight);
+        } else {
+          ((ViewGroup.MarginLayoutParams) root.getLayoutParams()).setMargins(navBarHeight, 0, navBarHeight, 0);
+        }
+      }
+    }
   }
 
   private void showZoomAsOverlay(ConstraintSet set) {
