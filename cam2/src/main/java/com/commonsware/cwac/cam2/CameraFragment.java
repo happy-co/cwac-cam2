@@ -25,6 +25,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.ActionBar;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -119,6 +120,8 @@ public class CameraFragment extends Fragment
   private ImageButton gallery;
   private Subscription photoTakenSubscription;
   private ConstraintLayout root;
+  private static final String TAG_RETAINED_FRAGMENT = "RetainedFragment";
+  private RetainedFragment mRetainedFragment;
 
   public static CameraFragment newPictureInstance(Uri output,
                                                   boolean updateMediaStore,
@@ -468,6 +471,19 @@ public class CameraFragment extends Fragment
     }
 
     updateConstraints(getResources().getConfiguration());
+    // find the retained fragment on activity restarts
+    FragmentManager fm = getFragmentManager();
+    mRetainedFragment = (RetainedFragment) fm.findFragmentByTag(TAG_RETAINED_FRAGMENT);
+
+    // create the fragment and data the first time
+    if (mRetainedFragment == null) {
+      // add the fragment
+      mRetainedFragment = new RetainedFragment();
+      fm.beginTransaction().add(mRetainedFragment, TAG_RETAINED_FRAGMENT).commit();
+      // load data from a data source or perform any calculation
+    } else {
+      gallery.setImageBitmap(mRetainedFragment.getThumbnail());
+    }
     return(v);
   }
 
@@ -888,6 +904,7 @@ public class CameraFragment extends Fragment
     }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<Bitmap>() {
       @Override
       public void call(final Bitmap bitmap) {
+        mRetainedFragment.setThumbnail(bitmap);
         freeze.setImageBitmap(bitmap);
         freeze.setScaleX(1);
         freeze.setScaleY(1);
@@ -904,6 +921,14 @@ public class CameraFragment extends Fragment
     });
   }
 
+  @Override
+  public void onPause() {
+    super.onPause();
+    if (getActivity().isFinishing()) {
+      FragmentManager fm = getFragmentManager();
+      fm.beginTransaction().remove(mRetainedFragment).commit();
+    }
+  }
 
   private void takePicture() {
     Uri output=getArguments().getParcelable(ARG_OUTPUT);
@@ -1172,4 +1197,24 @@ public class CameraFragment extends Fragment
         // no-op
       }
     };
+
+  public final static class RetainedFragment extends Fragment {
+
+    private Bitmap thumbnail;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      // retain this fragment
+      setRetainInstance(true);
+    }
+
+    public Bitmap getThumbnail() {
+      return thumbnail;
+    }
+
+    public void setThumbnail(Bitmap thumbnail) {
+      this.thumbnail = thumbnail;
+    }
+  }
 }
