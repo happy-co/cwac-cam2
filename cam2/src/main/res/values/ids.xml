@@ -1,0 +1,4 @@
+<resources>
+    <item name="preview_stack_start" type="id"/>
+    <item name="preview_stack_end" type="id"/>
+</resources>

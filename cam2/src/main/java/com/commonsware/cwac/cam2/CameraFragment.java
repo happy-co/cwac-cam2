@@ -35,6 +35,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.constraint.ConstraintLayout;
+import android.support.constraint.ConstraintSet;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -108,6 +110,7 @@ public class CameraFragment extends Fragment
   private MenuItem flashMenuItem;
   private ImageView shutter;
   private ImageButton gallery;
+  private ConstraintLayout root;
 
   public static CameraFragment newPictureInstance(Uri output,
                                                   boolean updateMediaStore,
@@ -329,6 +332,7 @@ public class CameraFragment extends Fragment
     freeze = (ImageView) v.findViewById(R.id.cwac_cam2_preview_freeze);
     progress=v.findViewById(R.id.cwac_cam2_progress);
     gallery = (ImageButton) v.findViewById(R.id.cwac_cam2_gallery);
+    root = (ConstraintLayout) v.findViewById(R.id.cwac_cam2_root);
     v.findViewById(R.id.cwac_cam2_switch).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
@@ -463,8 +467,166 @@ public class CameraFragment extends Fragment
       v.findViewById(R.id.rule_of_thirds).setVisibility(View.VISIBLE);
     }
 
-
+    updateConstraints(getResources().getConfiguration());
     return(v);
+  }
+
+  @Override
+  public void onConfigurationChanged(Configuration newConfig) {
+    super.onConfigurationChanged(newConfig);
+    updateConstraints(newConfig);
+  }
+
+
+  private void updateConstraints(Configuration config) {
+    ConstraintSet set = new ConstraintSet();
+    set.clone(root);
+    if (config.smallestScreenWidthDp >= 600) {
+      // tablet
+      if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        // toolbar
+        showToolbarAsOverlay(set);
+        // zoom
+        showZoomAsOverlay(set);
+        // preview stack
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.START, R.id.preview_stack_start, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.END, R.id.preview_stack_end, ConstraintSet.END);
+        // button bar
+        set.setVisibility(R.id.button_bar_top, View.GONE);
+        set.setVisibility(R.id.button_bar_bottom, View.GONE);
+        set.setVisibility(R.id.button_bar_start, View.VISIBLE);
+        set.setVisibility(R.id.button_bar_end, View.VISIBLE);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.TOP, R.id.cwac_cam2_shutter, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.START, R.id.button_bar_end, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.TOP, R.id.cwac_cam2_gallery, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.BOTTOM, R.id.cwac_cam2_switch, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.START, R.id.button_bar_end, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.BOTTOM, R.id.cwac_cam2_shutter, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.START, R.id.button_bar_end, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+      } else {
+        // toolbar
+        showToolbarAsOverlay(set);
+        // zoom
+        showZoomAsOverlay(set);
+        // preview stack
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.TOP, R.id.preview_stack_top, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM, R.id.preview_stack_bottom, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        // button bar
+        set.setVisibility(R.id.button_bar_top, View.VISIBLE);
+        set.setVisibility(R.id.button_bar_bottom, View.VISIBLE);
+        set.setVisibility(R.id.button_bar_start, View.GONE);
+        set.setVisibility(R.id.button_bar_end, View.GONE);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.TOP, R.id.button_bar_bottom, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.END, R.id.cwac_cam2_shutter, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.TOP, R.id.button_bar_bottom, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.START, R.id.cwac_cam2_switch, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.END, R.id.cwac_cam2_gallery, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.TOP, R.id.button_bar_bottom, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.START, R.id.cwac_cam2_shutter, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+      }
+    } else {
+      if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        // toolbar
+        showToolbarAsOverlay(set);
+        // zoom
+        showZoomAsOverlay(set);
+        // preview stack
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.START, R.id.preview_stack_start, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.END, R.id.preview_stack_end, ConstraintSet.END);
+        // button bar
+        set.setVisibility(R.id.button_bar_top, View.GONE);
+        set.setVisibility(R.id.button_bar_bottom, View.GONE);
+        set.setVisibility(R.id.button_bar_start, View.VISIBLE);
+        set.setVisibility(R.id.button_bar_end, View.VISIBLE);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.TOP, R.id.cwac_cam2_shutter, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.START, R.id.button_bar_end, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.TOP, R.id.cwac_cam2_gallery, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.BOTTOM, R.id.cwac_cam2_switch, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.START, R.id.button_bar_end, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.BOTTOM, R.id.cwac_cam2_shutter, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.START, R.id.button_bar_end, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+      } else {
+        // toolbar
+        set.connect(R.id.cwac_cam2_toolbar, ConstraintSet.TOP, ConstraintSet.PARENT_ID, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_toolbar, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_toolbar, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        set.setVisibility(R.id.cwac_cam2_toolbar_overlay, View.GONE);
+        // zoom
+        set.connect(R.id.cwac_cam2_zoom_minus, ConstraintSet.TOP, R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM);
+        set.clear(R.id.cwac_cam2_zoom_minus, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_zoom_minus, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+        set.clear(R.id.cwac_cam2_zoom_minus, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_zoom_plus, ConstraintSet.TOP, R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM);
+        set.clear(R.id.cwac_cam2_zoom_plus, ConstraintSet.BOTTOM);
+        set.clear(R.id.cwac_cam2_zoom_plus, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_zoom_plus, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        set.clear(R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM);
+        set.setVisibility(R.id.cwac_cam2_zoom_overlay, View.GONE);
+        // preview stack
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.TOP, R.id.cwac_cam2_toolbar, ConstraintSet.BOTTOM);
+        set.clear(R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_preview_stack, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+        // button bar
+        set.setVisibility(R.id.button_bar_top, View.GONE);
+        set.setVisibility(R.id.button_bar_bottom, View.GONE);
+        set.setVisibility(R.id.button_bar_start, View.GONE);
+        set.setVisibility(R.id.button_bar_end, View.GONE);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.TOP, R.id.cwac_cam2_shutter, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.START, ConstraintSet.PARENT_ID, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_switch, ConstraintSet.END, R.id.cwac_cam2_shutter, ConstraintSet.START);
+        set.clear(R.id.cwac_cam2_shutter, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.START, R.id.cwac_cam2_switch, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_shutter, ConstraintSet.END, R.id.cwac_cam2_gallery, ConstraintSet.START);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.TOP, R.id.cwac_cam2_shutter, ConstraintSet.TOP);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.BOTTOM, ConstraintSet.PARENT_ID, ConstraintSet.BOTTOM);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.START, R.id.cwac_cam2_shutter, ConstraintSet.END);
+        set.connect(R.id.cwac_cam2_gallery, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
+      }
+    }
+    set.applyTo(root);
+  }
+
+  private void showZoomAsOverlay(ConstraintSet set) {
+    set.clear(R.id.cwac_cam2_zoom_minus, ConstraintSet.TOP);
+    set.connect(R.id.cwac_cam2_zoom_minus, ConstraintSet.BOTTOM, R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM);
+    set.connect(R.id.cwac_cam2_zoom_minus, ConstraintSet.START, R.id.cwac_cam2_preview_stack, ConstraintSet.START);
+    set.clear(R.id.cwac_cam2_zoom_minus, ConstraintSet.END);
+    set.clear(R.id.cwac_cam2_zoom_plus, ConstraintSet.TOP);
+    set.connect(R.id.cwac_cam2_zoom_plus, ConstraintSet.BOTTOM, R.id.cwac_cam2_preview_stack, ConstraintSet.BOTTOM);
+    set.clear(R.id.cwac_cam2_zoom_plus, ConstraintSet.START);
+    set.connect(R.id.cwac_cam2_zoom_plus, ConstraintSet.END, R.id.cwac_cam2_preview_stack, ConstraintSet.END);
+    set.setVisibility(R.id.cwac_cam2_zoom_overlay, View.VISIBLE);
+  }
+
+  private void showToolbarAsOverlay(ConstraintSet set) {
+    set.connect(R.id.cwac_cam2_toolbar, ConstraintSet.TOP, R.id.cwac_cam2_preview_stack, ConstraintSet.TOP);
+    set.connect(R.id.cwac_cam2_toolbar, ConstraintSet.START, R.id.cwac_cam2_preview_stack, ConstraintSet.START);
+    set.connect(R.id.cwac_cam2_toolbar, ConstraintSet.END, R.id.cwac_cam2_preview_stack, ConstraintSet.END);
+    set.setVisibility(R.id.cwac_cam2_toolbar_overlay, View.VISIBLE);
   }
 
   private void updateFlashIcon() {
