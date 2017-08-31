@@ -64,6 +64,13 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+
+import rx.Single;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 /**
  * Fragment for displaying a camera preview, with hooks to allow
@@ -110,6 +117,7 @@ public class CameraFragment extends Fragment
   private MenuItem flashMenuItem;
   private ImageView shutter;
   private ImageButton gallery;
+  private Subscription photoTakenSubscription;
   private ConstraintLayout root;
 
   public static CameraFragment newPictureInstance(Uri output,
@@ -297,6 +305,9 @@ public class CameraFragment extends Fragment
     }
 
     super.onDestroy();
+    if (photoTakenSubscription != null) {
+      photoTakenSubscription.unsubscribe();
+    }
   }
 
   /**
@@ -866,21 +877,31 @@ public class CameraFragment extends Fragment
 
   @SuppressWarnings("unused")
   @Subscribe(threadMode =ThreadMode.MAIN)
-  public void onEventMainThread(CameraEngine.PictureTakenEvent event) {
-    final Bitmap bm = event.getImageContext().buildPreviewThumbnail(getActivity(), 0.1f, true);
-    freeze.setImageBitmap(bm);
-    freeze.setScaleX(1);
-    freeze.setScaleY(1);
-    freeze.setPivotX(gallery.getX() + gallery.getWidth()/2 - freeze.getX());
-    freeze.setPivotY(gallery.getY() + gallery.getHeight()/2 - freeze.getY());
-    freeze.animate().scaleY(0).scaleX(0).setDuration(200).setInterpolator(new AccelerateInterpolator()).withEndAction(new Runnable() {
+  public void onEventMainThread(final CameraEngine.PictureTakenEvent event) {
+    final int size = getResources().getDimensionPixelSize(R.dimen.cwac_cam2_button_size);
+    photoTakenSubscription = Single.fromCallable(new Callable<Bitmap>() {
       @Override
-      public void run() {
-        freeze.setImageBitmap(null);
-        final int size = getResources().getDimensionPixelSize(R.dimen.cwac_cam2_button_size);
-        gallery.setImageBitmap(ThumbnailUtils.extractThumbnail(bm, size, size, ThumbnailUtils.OPTIONS_RECYCLE_INPUT));
+      public Bitmap call() throws Exception {
+        final Bitmap bm = event.getImageContext().buildPreviewThumbnail(getActivity(), 0.1f, true);
+        return ThumbnailUtils.extractThumbnail(bm, size, size, ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
       }
-    }).start();
+    }).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<Bitmap>() {
+      @Override
+      public void call(final Bitmap bitmap) {
+        freeze.setImageBitmap(bitmap);
+        freeze.setScaleX(1);
+        freeze.setScaleY(1);
+        freeze.setPivotX(gallery.getX() + gallery.getWidth() / 2 - freeze.getX());
+        freeze.setPivotY(gallery.getY() + gallery.getHeight() / 2 - freeze.getY());
+        freeze.animate().scaleY(0).scaleX(0).setDuration(200).setInterpolator(new AccelerateInterpolator()).withEndAction(new Runnable() {
+          @Override
+          public void run() {
+            freeze.setImageBitmap(null);
+            gallery.setImageBitmap(bitmap);
+          }
+        }).start();
+      }
+    });
   }
 
 
